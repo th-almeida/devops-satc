@@ -1,0 +1,190 @@
+.app {
+  min-height: 100vh;
+}
+
+/* Hero */
+.hero {
+  background: linear-gradient(180deg, var(--gremio-black) 0%, #0a1628 50%, var(--gremio-black) 100%);
+  padding: 3rem 1.5rem 4rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 40px,
+    rgba(0, 102, 179, 0.03) 40px,
+    rgba(0, 102, 179, 0.03) 41px
+  );
+  pointer-events: none;
+}
+
+.logo-container {
+  margin-bottom: 1.5rem;
+}
+
+.logo {
+  width: 180px;
+  height: auto;
+  max-width: 100%;
+  filter: drop-shadow(0 4px 20px rgba(201, 162, 39, 0.3));
+}
+
+.logo-img-hidden {
+  display: none;
+}
+
+.logo-fallback {
+  width: 160px;
+  height: 160px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: repeating-linear-gradient(
+    180deg,
+    var(--gremio-black) 0px,
+    var(--gremio-black) 10px,
+    var(--gremio-blue) 10px,
+    var(--gremio-blue) 20px
+  );
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 4px solid var(--gremio-white);
+  box-shadow: 0 0 0 2px var(--gremio-blue), 0 8px 32px rgba(0,0,0,0.5);
+}
+
+.logo-fallback .year {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1rem;
+  color: var(--gremio-white);
+  letter-spacing: 0.1em;
+}
+
+.logo-fallback .name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.75rem;
+  color: var(--gremio-white);
+  letter-spacing: 0.05em;
+  line-height: 1.1;
+}
+
+.logo-fallback .initials {
+  font-size: 0.7rem;
+  color: var(--gremio-white);
+  letter-spacing: 0.2em;
+  opacity: 0.9;
+}
+
+.logo-fallback-hidden {
+  display: none;
+}
+
+.stars {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+.star {
+  font-size: 1.25rem;
+  color: var(--gremio-gold);
+}
+
+.star:nth-child(2) {
+  color: var(--gremio-silver);
+}
+
+.hero h1 {
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  margin: 0 0 0.5rem;
+  color: var(--gremio-white);
+  text-shadow: 0 2px 20px rgba(0,102,179,0.4);
+}
+
+.hero .subtitle {
+  font-size: 1.1rem;
+  color: var(--gremio-silver);
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Content */
+.content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.section {
+  margin-bottom: 3rem;
+}
+
+.section h2 {
+  font-size: 1.75rem;
+  color: var(--gremio-gold);
+  margin: 0 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--gremio-blue);
+  display: inline-block;
+}
+
+.section p {
+  margin: 0 0 1rem;
+  color: rgba(255,255,255,0.9);
+  line-height: 1.75;
+}
+
+.highlights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.card {
+  background: linear-gradient(145deg, rgba(0,102,179,0.15) 0%, rgba(0,102,179,0.05) 100%);
+  border: 1px solid rgba(0,102,179,0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,102,179,0.2);
+}
+
+.card .number {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2rem;
+  color: var(--gremio-gold);
+  line-height: 1;
+}
+
+.card .label {
+  font-size: 0.9rem;
+  color: var(--gremio-silver);
+  margin-top: 0.25rem;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 2rem 1.5rem;
+  border-top: 1px solid rgba(0,102,179,0.3);
+  color: var(--gremio-silver);
+  font-size: 0.9rem;
+}
+
+.footer strong {
+  color: var(--gremio-white);
+}
