@@ -2,7 +2,9 @@ name: Docker Image Check
 
 on:
   push:
-    branches: ["development"]
+    branches:
+      - development
+      - main
   workflow_dispatch:
 
 env:
