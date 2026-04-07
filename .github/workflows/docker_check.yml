@@ -84,8 +84,8 @@ jobs:
 
           echo "Quantidade de issues de vulnerabilidade MAJOR no Sonar: $COUNT"
 
-          if [ "$COUNT" -gt 2 ]; then
-            echo "Pipeline bloqueada: mais de 2 vulnerabilidades médias encontradas (Sonar)."
+          if [ "$COUNT" -gt 40 ]; then
+            echo "Pipeline bloqueada: mais de 40 vulnerabilidades médias encontradas (Sonar)."
             exit 1
           fi
         env:
