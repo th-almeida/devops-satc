@@ -61,18 +61,22 @@ jobs:
           name: trivy-results.json
           path: trivy-results.json
 
+      # MEDIUM em imagens Node/Alpine costuma ser ruído (CVE sem patch). Bloqueia só HIGH/CRITICAL.
       - name: Analyze Trivy results
         run: |
-          if [ -f trivy-results.json ]; then
-            VULN_COUNT=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "MEDIUM")] | length' trivy-results.json)
-            echo "Quantidade de vulnerabilidades médias: $VULN_COUNT"
-
-            if [ "$VULN_COUNT" -gt 2 ]; then
-              echo "Pipeline bloqueada: mais de 2 vulnerabilidades médias encontradas."
-              exit 1
-            fi
-          else
+          if [ ! -f trivy-results.json ]; then
             echo "Arquivo de resultados do Trivy não encontrado."
+            exit 1
+          fi
+
+          MEDIUM=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "MEDIUM")] | length' trivy-results.json)
+          HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "HIGH")] | length' trivy-results.json)
+          CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' trivy-results.json)
+
+          echo "Trivy — MEDIUM: $MEDIUM | HIGH: $HIGH | CRITICAL: $CRITICAL"
+
+          if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ]; then
+            echo "Pipeline bloqueada: há vulnerabilidades HIGH ou CRITICAL na imagem."
             exit 1
           fi
 
