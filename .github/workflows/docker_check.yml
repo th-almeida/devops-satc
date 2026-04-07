@@ -8,13 +8,14 @@ on:
 env:
   IMAGE_NAME: satc-devops
   IMAGE_TAG: "0.0.2"
-  # Ajuste no SonarCloud: organization e projectKey devem coincidir com o projeto criado lá
-  SONAR_PROJECT_KEY: usuario_satc-devops
-  SONAR_ORGANIZATION: usuario
 
 jobs:
   docker_check:
     runs-on: ubuntu-latest
+    # Chaves reais vêm dos secrets (crie o projeto no SonarCloud antes e copie Organization + Project key)
+    env:
+      SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+      SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
     permissions:
       contents: read
       actions: write
