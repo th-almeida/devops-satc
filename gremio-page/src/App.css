@@ -61,14 +61,14 @@
 }
 
 .logo-fallback .year {
-  font-family: system-ui, "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  font-family: 'Bebas Neue', sans-serif;
   font-size: 1rem;
   color: var(--gremio-white);
   letter-spacing: 0.1em;
 }
 
 .logo-fallback .name {
-  font-family: system-ui, "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  font-family: 'Bebas Neue', sans-serif;
   font-size: 1.75rem;
   color: var(--gremio-white);
   letter-spacing: 0.05em;
@@ -164,7 +164,7 @@
 }
 
 .card .number {
-  font-family: system-ui, "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  font-family: 'Bebas Neue', sans-serif;
   font-size: 2rem;
   color: var(--gremio-gold);
   line-height: 1;
