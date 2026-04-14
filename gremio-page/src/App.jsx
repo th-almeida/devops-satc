@@ -83,6 +83,7 @@ function App() {
       <footer className="footer">
         <p><strong>Grêmio FBPA</strong> — 1903 · Porto Alegre, RS</p>
         <p>Página criada em React · Tributo ao Imortal Tricolor</p>
+        <p>Desenvolvido por Thiago Almeida</p>
       </footer>
     </div>
   )
