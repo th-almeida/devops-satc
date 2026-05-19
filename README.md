@@ -136,12 +136,38 @@ O Nginx na imagem Docker expõe:
 - `/healthz` — startup e liveness
 - `/ready` — readiness
 
+### Aula 10 — HPA e Metrics Server
+
+O manifest do HPA está em [`k8s/hpa.yaml`](k8s/hpa.yaml) (igual ao slide da aula). O HPA **só funciona** se o **Metrics Server** estiver instalado no cluster:
+
+```bash
+chmod +x k8s/metrics-server/install.sh
+./k8s/metrics-server/install.sh
+```
+
+Criar o namespace e aplicar app + HPA:
+
+```bash
+./k8s/render.sh
+kubectl apply -f k8s/rendered/namespace.yaml
+kubectl apply -f k8s/rendered/deployment.yaml
+kubectl apply -f k8s/rendered/service.yaml
+kubectl apply -f k8s/rendered/hpa.yaml
+```
+
 ### Testar HPA
 
 ```bash
 kubectl get hpa -n devops-satc
 kubectl describe hpa app-satc-hpa -n devops-satc
 kubectl top pods -n devops-satc
+```
+
+Gerar carga para forçar scale up (job opcional):
+
+```bash
+kubectl apply -f k8s/rendered/load-test/cpu-load-job.yaml
+kubectl get hpa -n devops-satc -w
 ```
 
 ### Secrets do GitHub Actions (deploy)

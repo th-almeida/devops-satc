@@ -1,0 +1,26 @@
+# Job opcional para gerar carga HTTP e observar o HPA escalar o app-satc
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: app-satc-load-test
+  namespace: ##K8S_NAMESPACE##
+spec:
+  parallelism: 3
+  completions: 3
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: load
+          image: curlimages/curl:8.11.1
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Gerando carga em http://app-satc/ por 5 minutos..."
+              end=$((SECONDS + 300))
+              while [ "$SECONDS" -lt "$end" ]; do
+                curl -s -o /dev/null "http://app-satc/" || true
+              done
+              echo "Carga finalizada."

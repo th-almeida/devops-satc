@@ -9,7 +9,7 @@ DOCKER_IMAGE="${DOCKER_IMAGE:?Defina DOCKER_IMAGE (ex.: usuario/satc-devops:0.0.
 APP_HOST="${APP_HOST:-gremio.local}"
 
 rm -rf "${OUTPUT_DIR}"
-mkdir -p "${OUTPUT_DIR}/blue-green" "${OUTPUT_DIR}/canary"
+mkdir -p "${OUTPUT_DIR}/blue-green" "${OUTPUT_DIR}/canary" "${OUTPUT_DIR}/load-test"
 
 render_file() {
   local src="$1"
@@ -32,6 +32,10 @@ done
 
 for file in "${SCRIPT_DIR}/canary"/*.yaml; do
   render_file "${file}" "${OUTPUT_DIR}/canary/$(basename "${file}")"
+done
+
+for file in "${SCRIPT_DIR}/load-test"/*.yaml; do
+  render_file "${file}" "${OUTPUT_DIR}/load-test/$(basename "${file}")"
 done
 
 echo "Manifests renderizados em ${OUTPUT_DIR}"
