@@ -1,0 +1,71 @@
+name: Deploy Rolling Update
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Tag da imagem Docker (ex. 0.0.2 ou SHA do commit)
+        required: true
+        default: "0.0.2"
+      k8s_namespace:
+        description: Namespace do Kubernetes
+        required: true
+        default: "devops-satc"
+
+env:
+  IMAGE_NAME: satc-devops
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure Kubernetes context
+        run: |
+          mkdir -p "$HOME/.kube"
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+
+      - name: Render manifests
+        env:
+          NAMESPACE: ${{ inputs.k8s_namespace }}
+          DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
+          APP_HOST: gremio.local
+        run: |
+          chmod +x k8s/render.sh
+          ./k8s/render.sh
+
+      - name: Apply base manifests
+        run: |
+          kubectl apply -f k8s/rendered/deployment.yaml
+          kubectl apply -f k8s/rendered/service.yaml
+          kubectl apply -f k8s/rendered/hpa.yaml
+
+      - name: Deploy image
+        id: deploy_step
+        env:
+          NAMESPACE: ${{ inputs.k8s_namespace }}
+        run: |
+          kubectl set image deployment/app-satc \
+            satc-devops=${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }} \
+            -n "${NAMESPACE}"
+
+      - name: Monitor rollout
+        id: monitor
+        env:
+          NAMESPACE: ${{ inputs.k8s_namespace }}
+        run: |
+          kubectl rollout status deployment/app-satc -n "${NAMESPACE}" --timeout=5m
+
+      - name: Auto rollback on failure
+        if: failure() && steps.deploy_step.outcome == 'success'
+        env:
+          NAMESPACE: ${{ inputs.k8s_namespace }}
+        run: |
+          echo "Deploy falhou! Executando rollback..."
+          kubectl rollout undo deployment/app-satc -n "${NAMESPACE}"

@@ -1,0 +1,85 @@
+name: Deploy Canary
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Tag da imagem Docker para o canary
+        required: true
+        default: "0.0.2"
+      k8s_namespace:
+        description: Namespace do Kubernetes
+        required: true
+        default: "devops-satc"
+
+env:
+  IMAGE_NAME: satc-devops
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure Kubernetes context
+        run: |
+          mkdir -p "$HOME/.kube"
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+
+      - name: Render manifests
+        env:
+          NAMESPACE: ${{ inputs.k8s_namespace }}
+          DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
+          APP_HOST: gremio.local
+        run: |
+          chmod +x k8s/render.sh
+          ./k8s/render.sh
+
+      - name: Apply stable stack
+        run: |
+          kubectl apply -f k8s/rendered/canary/deployment-stable.yaml
+          kubectl apply -f k8s/rendered/canary/service-stable.yaml
+          kubectl apply -f k8s/rendered/canary/ingress-stable.yaml
+
+      - name: Deploy Canary (10% traffic)
+        id: deploy_canary
+        env:
+          NAMESPACE: ${{ inputs.k8s_namespace }}
+        run: |
+          kubectl apply -f k8s/rendered/canary/deployment-canary.yaml
+          kubectl apply -f k8s/rendered/canary/service-canary.yaml
+          kubectl apply -f k8s/rendered/canary/ingress-canary.yaml
+          kubectl set image deployment/app-satc-canary \
+            satc-devops=${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }} \
+            -n "${NAMESPACE}"
+          kubectl rollout status deployment/app-satc-canary -n "${NAMESPACE}" --timeout=3m
+
+      - name: Wait and analyze metrics
+        run: sleep 60
+
+      - name: Promote Canary to 100%
+        if: success()
+        env:
+          NAMESPACE: ${{ inputs.k8s_namespace }}
+        run: |
+          kubectl set image deployment/app-satc \
+            satc-devops=${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }} \
+            -n "${NAMESPACE}"
+          kubectl rollout status deployment/app-satc -n "${NAMESPACE}" --timeout=5m
+          kubectl delete ingress app-satc-ingress-canary -n "${NAMESPACE}" --ignore-not-found
+          kubectl delete deployment app-satc-canary -n "${NAMESPACE}" --ignore-not-found
+          kubectl delete service app-satc-canary -n "${NAMESPACE}" --ignore-not-found
+
+      - name: Remove Canary on failure
+        if: failure()
+        env:
+          NAMESPACE: ${{ inputs.k8s_namespace }}
+        run: |
+          kubectl delete ingress app-satc-ingress-canary -n "${NAMESPACE}" --ignore-not-found
+          kubectl delete deployment app-satc-canary -n "${NAMESPACE}" --ignore-not-found
+          kubectl delete service app-satc-canary -n "${NAMESPACE}" --ignore-not-found

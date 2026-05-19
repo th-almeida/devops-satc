@@ -1,0 +1,73 @@
+name: Deploy Blue-Green
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Tag da imagem Docker para o ambiente Green
+        required: true
+        default: "0.0.2"
+      k8s_namespace:
+        description: Namespace do Kubernetes
+        required: true
+        default: "devops-satc"
+
+env:
+  IMAGE_NAME: satc-devops
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure Kubernetes context
+        run: |
+          mkdir -p "$HOME/.kube"
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+
+      - name: Render manifests
+        env:
+          NAMESPACE: ${{ inputs.k8s_namespace }}
+          DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
+          APP_HOST: gremio.local
+        run: |
+          chmod +x k8s/render.sh
+          ./k8s/render.sh
+
+      - name: Apply Blue environment
+        run: |
+          kubectl apply -f k8s/rendered/blue-green/deployment-blue.yaml
+          kubectl apply -f k8s/rendered/blue-green/service-router.yaml
+
+      - name: Deploy to Green environment
+        id: deploy_green
+        env:
+          NAMESPACE: ${{ inputs.k8s_namespace }}
+        run: |
+          kubectl apply -f k8s/rendered/blue-green/deployment-green.yaml
+          kubectl set image deployment/app-satc-green \
+            satc-devops=${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }} \
+            -n "${NAMESPACE}"
+          kubectl rollout status deployment/app-satc-green -n "${NAMESPACE}" --timeout=3m
+
+      - name: Switch traffic to Green
+        if: success()
+        env:
+          NAMESPACE: ${{ inputs.k8s_namespace }}
+        run: |
+          kubectl patch service app-satc-traffic-router -n "${NAMESPACE}" \
+            -p '{"spec":{"selector":{"app":"satc","version":"green"}}}'
+
+      - name: Emergency rollback to Blue
+        if: failure()
+        env:
+          NAMESPACE: ${{ inputs.k8s_namespace }}
+        run: |
+          kubectl patch service app-satc-traffic-router -n "${NAMESPACE}" \
+            -p '{"spec":{"selector":{"app":"satc","version":"blue"}}}'

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-satc-canary
+  namespace: ##K8S_NAMESPACE##
+  labels:
+    app: satc
+    track: canary
+spec:
+  type: ClusterIP
+  selector:
+    app: satc
+    track: canary
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
